@@ -28,7 +28,9 @@ async function test(){
 	//const array_reunions = await generate_all_reunions_url(little_array);
 	//console.log(array_reunions);
 
-	const array_races_urls = await generate_races_urls_for_a_reunion("http://www.turf-fr.com/arrivees-pmu/23888_lundi-1-janvier-2018-vincennes.html");
+	//const array_races_urls = await generate_races_urls_for_a_reunion("http://www.turf-fr.com/arrivees-pmu/23888_lundi-1-janvier-2018-vincennes.html");
+
+	const array_races = await scrape_race("http://www.turf-fr.com/resultats-pmu/144782_prix-de-pavilly.html");
 
 }
 
@@ -172,6 +174,41 @@ function generate_races_urls_for_a_reunion(reunion_url) {
 	});
 }
 
+function scrape_race(race_url) {
+  return new Promise((resolve, reject) => {
+		var array = [];
+		request({url:race_url,headers:headers}, function(error, response, html) {
+			if (!error) {
+				var $ = cheerio.load(html);
+
+				var object = {place:"",numero:"",cheval:"",jockey:"",entraineur:"",cote:""};
+
+				//console.log($('.turf-info-professionnel_page').children('div[id=contenu]').children('div[id=centre]').find('div:nth-child(2)').children('center').children('table').children('tbody').children('tr').text());
+				//console.log($('#centre > div.WhiteBox.PD5 > center:nth-child(3) > table > tbody > tr').text());
+				$('#centre > div.WhiteBox.PD5 > center:nth-child(3) > table > tbody > tr').each(function(i, element) {
+					if(i!==0) {
+						object.place = $(this).find('td:nth-child(1)').text().match(/[1-9]/g)[0];
+						object.numero = $(this).find('td:nth-child(2)').text();
+						object.cheval = $(this).find('td:nth-child(3)').text();
+						object.jockey = $(this).find('td:nth-child(4)').text();
+						object.entraineur = $(this).find('td:nth-child(5)').text();
+						object.cote = $(this).find('td:nth-child(6)').text();
+						object.cote = object.cote.substr(0, object.cote.length-2)
+					}
+				  console.log("OBJECT");
+				  console.log(object);
+
+				  array.push(object);
+				});
+				
+				
+				resolve(array);
+			} else {
+				reject(null);
+			}
+		});
+	});
+}
 
 module.exports = {
 	test : test,
